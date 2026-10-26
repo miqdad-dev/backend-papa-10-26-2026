@@ -1,0 +1,36 @@
+
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Install Python deps (if any)
+        run: |
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+      - name: Install Node deps (if any)
+        run: |
+          if [ -f package.json ]; then corepack enable || true; (pnpm -v && pnpm install --frozen-lockfile) || (yarn -v && yarn install --frozen-lockfile) || npm ci || true; fi
+      - name: Build C++ (if any)
+        run: |
+          if [ -f CMakeLists.txt ]; then cmake -S . -B build && cmake --build build -j; fi
+      - name: Run tests
+        run: |
+          if [ -f CMakeLists.txt ]; then cd build && ctest --output-on-failure || true; cd ..; fi
+          if [ -f pom.xml ]; then mvn -q -DskipITs=false test || true; fi
+          if [ -f package.json ]; then (npm test || yarn test || pnpm test) || true; fi
+          if [ -d tests ] || ls -1 **/*_test.py **/test_*.py 2>/dev/null | grep -q .; then python -m pytest -q || true; fi

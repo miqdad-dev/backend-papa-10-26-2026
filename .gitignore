@@ -1,0 +1,17 @@
+
+# General
+*.log
+*.tmp
+node_modules/
+dist/
+build/
+.cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+target/
+build/
+cmake-build*/
+.mvn/
+.idea/
+.vscode/
